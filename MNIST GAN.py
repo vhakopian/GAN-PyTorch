@@ -19,7 +19,7 @@ trainset = torchvision.datasets.MNIST(root='./data', train=True,
 #Defining the neural networks
 class Generator(nn.Module):
     #3-layer perceptron
-    #input = vector of dimension 28*28 (noise)
+    #input = vector of dimension 14 (uniform noise)
     #output = 28*28*1 image
     def __init__(self):
         super(Generator, self).__init__()
@@ -94,7 +94,7 @@ for epoch in range(no_epochs):
     for batch in range(int(5920/m)):
 
         x = []
-        k = 1
+        k = 1 #number of steps of discriminator training per generator training step
         
         for i in range(k):
             #Discriminator training
