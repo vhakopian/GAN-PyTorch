@@ -23,13 +23,11 @@ class Generator(nn.Module):
     #output = 28*28*1 image
     def __init__(self):
         super(Generator, self).__init__()
-        self.layer1 = nn.Linear(14, 14)
-        self.layer2 = nn.Linear(14, 28)
+        self.layer1 = nn.Linear(14, 28)
         self.layer3 = nn.Linear(28, 28*28)
 
     def forward(self, x):
-        x = F.relu(self.layer1(x))
-        x = F.relu(self.layer2(x))
+        x = F.leaky_relu(self.layer1(x))
         x = F.tanh(self.layer3(x))
         x = x.view(-1,28,28)
         return x
@@ -47,11 +45,11 @@ class Discriminator(nn.Module):
 
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
+        x = self.pool(F.leaky_relu(self.conv1(x)))
+        x = self.pool(F.leaky_relu(self.conv2(x)))
         x = x.view(-1, 4 * 4 * 4)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = F.leaky_relu(self.fc1(x))
+        x = F.leaky_relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
@@ -61,11 +59,11 @@ generator = Generator()
 
 
 criterion = nn.CrossEntropyLoss()
-optimizerGenerator = optim.SGD(generator.parameters(), lr=0.02)
-optimizerDiscriminator = optim.SGD(discriminator.parameters(), lr=0.005)
+optimizerGenerator = optim.SGD(generator.parameters(), lr=0.003)
+optimizerDiscriminator = optim.SGD(discriminator.parameters(), lr=0.01)
 
 #Training the GAN
-no_epochs = 30
+no_epochs = 100
 m = 10 #mini-batch size
 
 #dataset filtering
@@ -100,7 +98,7 @@ for epoch in range(no_epochs):
             #Discriminator training
             optimizerDiscriminator.zero_grad()
         
-            noise = torch.rand(m, 14, device=device, dtype=dtype)
+            noise = torch.randn(m, 14, device=device, dtype=dtype)
             x_gen = generator(noise)
             
             x_gen= x_gen.view(m,1,28,28)
@@ -132,7 +130,7 @@ for epoch in range(no_epochs):
         #Generator training
         optimizerGenerator.zero_grad()
         
-        noise = torch.rand(m, 14, device=device, dtype=dtype)
+        noise = torch.randn(m, 14, device=device, dtype=dtype)
         x_gen = generator(noise)
         x_gen= x_gen.view(m,1,28,28)
         
@@ -165,6 +163,10 @@ for epoch in range(no_epochs):
             plt.show()
             plt.plot([k for k in range(len(loss_gen_history))],loss_gen_history, loss_discr_history)
             plt.show()
+            
+            noise = torch.randn(100, 14, device=device, dtype=dtype)
+            x_gen = generator(noise)
+            print(x_gen.std(0).mean().item())
 
 
 #Testing
@@ -172,8 +174,14 @@ no_to_generate = 10
 
 #Using no_grad() because we don't want to track gradients during testing
 with torch.no_grad():
+    
+    
+    noise = torch.randn(200, 14, device=device, dtype=dtype)
+    x_gen = generator(noise)
+    print(x_gen.std(0).mean().item())
+    
     for k in range(no_to_generate):
-        noise = torch.rand(1, 14, device=device, dtype=dtype)
+        noise = torch.randn(1, 14, device=device, dtype=dtype)
         x_gen = generator(noise)
         
         img = x_gen.detach().numpy()
