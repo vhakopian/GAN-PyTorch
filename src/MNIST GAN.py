@@ -18,39 +18,30 @@ trainset = torchvision.datasets.MNIST(root='./data', train=True,
 
 #Defining the neural networks
 class Generator(nn.Module):
-    #3-layer perceptron
-    #input = vector of dimension 14 (uniform noise)
-    #output = 28*28*1 image
+
     def __init__(self):
         super(Generator, self).__init__()
-        self.layer1 = nn.Linear(14, 28)
-        self.layer3 = nn.Linear(28, 28*28)
+        self.layer1 = nn.Linear(64, 128)
+        self.layer2 = nn.Linear(128, 512)
+        self.layer3 = nn.Linear(512, 28*28)
 
     def forward(self, x):
         x = F.leaky_relu(self.layer1(x))
+        x = F.leaky_relu(self.layer2(x))
         x = F.tanh(self.layer3(x))
-        x = x.view(-1,28,28)
         return x
     
 class Discriminator(nn.Module):
-    #ConvNet : 2 layers Conv2d / 3 dense layers
+
     def __init__(self):
         super(Discriminator, self).__init__()
-        self.conv1 = nn.Conv2d(1, 2, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(2, 4, 5)
-        self.fc1 = nn.Linear(4 * 4 * 4, 32)
-        self.fc2 = nn.Linear(32, 16)
-        self.fc3 = nn.Linear(16, 2)
+        self.layer1 = nn.Linear(28*28,256)
+        self.layer3 = nn.Linear(256, 1)
 
 
     def forward(self, x):
-        x = self.pool(F.leaky_relu(self.conv1(x)))
-        x = self.pool(F.leaky_relu(self.conv2(x)))
-        x = x.view(-1, 4 * 4 * 4)
-        x = F.leaky_relu(self.fc1(x))
-        x = F.leaky_relu(self.fc2(x))
-        x = self.fc3(x)
+        x = F.leaky_relu(self.layer1(x))
+        x = F.sigmoid(self.layer3(x))
         return x
 
 
@@ -58,13 +49,13 @@ discriminator = Discriminator()
 generator = Generator()
 
 
-criterion = nn.CrossEntropyLoss()
-optimizerGenerator = optim.SGD(generator.parameters(), lr=0.003)
-optimizerDiscriminator = optim.SGD(discriminator.parameters(), lr=0.01)
+criterion = nn.BCELoss()
+optimizerGenerator = optim.SGD(generator.parameters(), lr=0.001)
+optimizerDiscriminator = optim.SGD(discriminator.parameters(), lr=0.05)
 
 #Training the GAN
-no_epochs = 100
-m = 10 #mini-batch size
+no_epochs = 250
+m = 16 #mini-batch size
 
 #dataset filtering
 data = torch.zeros(5923,28,28)
@@ -78,6 +69,8 @@ for k in range(len(trainset.train_labels)):
 
 
 data = data[:5920]
+
+data = data.reshape(5920,28*28)
 
 loss_gen_history=[]
 loss_discr_history=[]
@@ -98,16 +91,14 @@ for epoch in range(no_epochs):
             #Discriminator training
             optimizerDiscriminator.zero_grad()
         
-            noise = torch.randn(m, 14, device=device, dtype=dtype)
+            noise = torch.randn(m, 64, device=device, dtype=dtype)
             x_gen = generator(noise)
-            
-            x_gen= x_gen.view(m,1,28,28)
-            
-            x_data = data[m*batch:m*(batch+1)].view(m,1,28,28)
+
+            x_data = data[m*batch:m*(batch+1)]
             
             assert x_data.shape == x_gen.shape
-            
-            x = torch.zeros(2*m,1, 28, 28, dtype=dtype)
+
+            x = torch.zeros(2*m,28*28, dtype=dtype)
             for example in range(m):
                 x[example] = x_gen[example]
             for example in range(m,2*m):
@@ -115,10 +106,12 @@ for epoch in range(no_epochs):
 
             
             y = discriminator(x)
-
+            
+            y = y.reshape(2*m)
+        
     
-            target = torch.ones(2*m, dtype=torch.long)
-            target[:m] = torch.zeros(m, dtype=torch.long)
+            target = torch.ones(2*m, dtype=torch.float)
+            target[:m] = torch.zeros(m, dtype=torch.float)
             
             loss = criterion(y, target)
         
@@ -130,13 +123,14 @@ for epoch in range(no_epochs):
         #Generator training
         optimizerGenerator.zero_grad()
         
-        noise = torch.randn(m, 14, device=device, dtype=dtype)
+        noise = torch.randn(m, 64, device=device, dtype=dtype)
         x_gen = generator(noise)
-        x_gen= x_gen.view(m,1,28,28)
         
         y_gen = discriminator(x_gen)
+        y_gen = y_gen.reshape(m)
         
-        target = torch.ones(m, dtype=torch.long)
+        #Labels flipping (generator training)
+        target = torch.ones(m, dtype=torch.float)
             
         loss = criterion(y_gen, target)
         
@@ -159,15 +153,11 @@ for epoch in range(no_epochs):
             img = x[0]
             img = img.detach().numpy()
             img = img.reshape((28,28))
-            plt.imshow(img)
+            plt.imshow(img,cmap='Greys')
             plt.show()
             plt.plot([k for k in range(len(loss_gen_history))],loss_gen_history, loss_discr_history)
             plt.show()
             
-            noise = torch.randn(100, 14, device=device, dtype=dtype)
-            x_gen = generator(noise)
-            print(x_gen.std(0).mean().item())
-
 
 #Testing
 no_to_generate = 10
@@ -176,18 +166,20 @@ no_to_generate = 10
 with torch.no_grad():
     
     
-    noise = torch.randn(200, 14, device=device, dtype=dtype)
+    noise = torch.randn(200, 64, device=device, dtype=dtype)
     x_gen = generator(noise)
-    print(x_gen.std(0).mean().item())
+    print("variance of generator = " + str(x_gen.std(0).mean().item()))
     
     for k in range(no_to_generate):
-        noise = torch.randn(1, 14, device=device, dtype=dtype)
+        noise = torch.randn(1, 64, device=device, dtype=dtype)
         x_gen = generator(noise)
         
         img = x_gen.detach().numpy()
         img = img.reshape((28,28))
-        plt.imshow(img)
+        plt.imshow(img, cmap='Greys')
         plt.savefig('generated image no '+str(k)+' .png')
-
+    
+    plt.clf()
+    plt.figure(figsize=(10,4))
     plt.plot([k for k in range(len(loss_gen_history))],loss_gen_history, loss_discr_history)
     plt.savefig('loss.png')
