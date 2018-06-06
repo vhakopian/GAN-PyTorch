@@ -52,7 +52,7 @@ Whereas, the generative network training aims to maximize D(G(z)), or minimize l
 
 
 Mathematically, it is a minimax game :
-min_G (max_D (E(D(X)) + E(log(1-D(G(Z)))))
+min_G max_D E(D(X)) + E(log(1-D(G(Z))))
 where: 
  - X follow p_data data distribution (*"true distribution"*)
  - Z follow p_g generated distribution
