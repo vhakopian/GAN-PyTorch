@@ -16,8 +16,8 @@ The goal is to experiment and get results on the factors that influence the **st
  2. **Experimentation on MNIST database**
 	 1. Implementation details
 	 2. Issues
-         	1. Mode problems
-        	2. Mode cycling
+	 	1. Mode problems
+		2. Mode cycling
  3. **Results**
  4. **Next things to do**
 
@@ -138,11 +138,11 @@ Here are the **10 figures randomly taken from the generator** after the training
 
 |Figure 1|Figure 2|Figure 3|Figure 4|Figure 5|
 |-|-|-|-|-|
-|![](images/generated image no 0 .png)|![](images/generated image no 1 .png)|![](images/generated image no 2 .png)|![](images/generated image no 3 .png)|![](images/generated image no 4 .png)|
+|![](images/generated%20image%20no%200%20.png)|![](images/generated%20image%20no%201%20.png)|![](images/generated%20image%20no%202%20.png)|![](images/generated%20image%20no%203%20.png)|![](images/generated%20image%20no%204%20.png)|
 
 |Figure 6|Figure 7|Figure 8|Figure 9|Figure 10|
 |-|-|-|-|-|
-|![](images/generated image no 5 .png)|![](images/generated image no 6 .png)|![](images/generated image no 7 .png)|![](images/generated image no 8 .png)|![](images/generated image no 9 .png)|
+|![](images/generated%20image%20no%205%20.png)|![](images/generated%20image%20no%206%20.png)|![](images/generated%20image%20no%207%20.png)|![](images/generated%20image%20no%208%20.png)|![](images/generated%20image%20no%209%20.png)|
 
 <br><br>
 
