@@ -156,6 +156,7 @@ These first results are quite good, even if the networks haven't converge to an 
 
 # Next things to do
 
+ - Using all numbers, not only zeros
  - DCGAN (using CNN as discriminator and a deconvolutional network as generator)
  - Experimenting on CIFAR-10 database
  
