@@ -15,7 +15,9 @@ The goal is to experiment and get results on the factors that influence the **st
 	 2. GAN 
  2. **Experimentation on MNIST database**
 	 1. Implementation details
-	 2. Stability issues
+	 2. Issues
+         	1. Mode problems
+        	2. Mode cycling
  3. **Results**
  4. **Next things to do**
 
@@ -107,11 +109,50 @@ The algorithm consist in a **loop of these two successive trainings** :
 	 - Backpropagating the errors, but only updating the parameters of G.
 
 
-## Stability issues
-*Work in progress*
+##  Issues
+
+### Mode problems
+
+One of the main problem that I had to address when training the GAN was making the generator learn more than one **"mode"** of the distribution.
+
+For example, MNIST database has several classes which are also, by extension, modes : 0, 1, 2, ... But even with only one class (e.g. zeros), you also have several modes (basically different ways of writing a zero).
+
+ **Mode collapse** is when the generator only learns one mode. For example, it will generates zeros that are almost the same, as you can see on the following pictures.
+ 
+Thus, making it **very simple** for the discriminator to **detect generated images**.
+
+### Mode cycling
+
+What I observed with **mode collapse** is that it is often caused by a "bad" discriminator. 
+- The generator finds a **single mode S** (here a single image) that fools D each time, thus he is at an **optimum**.
+- At the **next discriminator training**, D learns very fastly to discriminate, he just have to discriminate the neighbourhood of **S** to have a 100% accuracy.
+- At the **next generator training**, G learns also very fastly to fool G, he just have to change its **single point** to another to fool D perfectly (indeed D always predict that images different from S are "real").
+- And so on...
+
+So, instead of learning multiples modes, the **generator cycles between different modes**, thus preventing the model to **converge**.
+
 
 # Results
-*Work in progress*
+
+Here are the **10 figures randomly taken from the generator** after the training on zeros of MNIST (not picked).
+
+|Figure 1|Figure 2|Figure 3|Figure 4|Figure 5|
+|-|-|-|-|-|
+|![](images/generated image no 0 .png)|![](images/generated image no 1 .png)|![](images/generated image no 2 .png)|![](images/generated image no 3 .png)|![](images/generated image no 4 .png)|
+
+|Figure 6|Figure 7|Figure 8|Figure 9|Figure 10|
+|-|-|-|-|-|
+|![](images/generated image no 5 .png)|![](images/generated image no 6 .png)|![](images/generated image no 7 .png)|![](images/generated image no 8 .png)|![](images/generated image no 9 .png)|
+
+<br><br>
+
+This graph shows the **loss** of G (in blue) and D (in orange) in function of the number of iterations (epoch) during the training.
+![](images/loss.png)
+
+
+These first results are quite good, even if the networks haven't converge to an optimum, the zeros generated seems natural. The discriminator loss is steadly increasing, which is a good news, the generator is learning how to fool the discriminator.
+
+*The algorithm did not converge because of hardware limitations of my computer (a simple notebook), it would have probably if I waited enough time.*
 
 # Next things to do
 
